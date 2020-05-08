@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -8,67 +8,107 @@ public class rope : MonoBehaviour
     [SerializeField] GameObject player1;
     [SerializeField] GameObject player2;
     [Range(1, 50)] [SerializeField] int length;
+    [SerializeField] int maxDistance = 15;
 
+    Rigidbody p1rg;
+    Rigidbody p2rg;
     private float partlength;
     private GameObject lastSpawnned;
     bool ropeCnt;
+    int temp = 0;
+    
+    List<GameObject> ropePart = new List<GameObject>();
 
-    private void Awake()
-    {
-       
-    }
     void Start()
     {
+        p1rg = player1.GetComponent<Rigidbody>();
+        p2rg = player2.GetComponent<Rigidbody>();
         ropeCnt = false;
         partlength = partPrefab.transform.localScale.y;
+        
     }
-
+    
     // Update is called once per frame
     void Update()
     {
-        if (!ropeCnt)
+        length = (int)(Vector3.Distance(player1.transform.position, player2.transform.position));
+
+        if (!ropeCnt && length < maxDistance)
+        { 
+            spawnRope();       
+        }
+
+        if (length > maxDistance)
         {
-            spawnRope();
+            DestroyRope();
         }
     }
+
 
     private void spawnRope()
     {
-        length = (int)(Vector3.Distance(player1.transform.position, player2.transform.position)) ;
-        int cnt = (int)(length / partlength);
-        for(int i=0; i < cnt; i++)
+        if (temp == 0)
         {
-            GameObject part;
-            if(i==0)
+            p1rg.isKinematic = true;
+            p2rg.isKinematic = true;
+            temp++;
+            ropeCnt = true;
+            length = (int)(Vector3.Distance(player1.transform.position, player2.transform.position));
+            int cnt = (int)(length / partlength);
+            for (int i = 0; i < cnt; i++)
             {
-                part = Instantiate(partPrefab, new Vector3(transform.position.x , transform.position.y, (transform.position.z + partlength * (i + 1))), Quaternion.identity);
-                part.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
-                part.transform.parent = player1.transform;
-                part.GetComponent<HingeJoint>().connectedBody = player1.GetComponent<Rigidbody>();
+                GameObject part;
+                if (i == 0)
+                {
+                    part = Instantiate(partPrefab, new Vector3(transform.position.x, transform.position.y, (transform.position.z + partlength * (i + 1))), Quaternion.identity);
+                    part.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
+                    part.transform.parent = player1.transform;
+                    part.GetComponent<HingeJoint>().connectedBody = player1.GetComponent<Rigidbody>();
 
+                }
+                else if (i == cnt - 1)
+                {
+                    part = Instantiate(partPrefab, new Vector3(transform.position.x, transform.position.y, (transform.position.z + partlength * (i + 1))), Quaternion.identity);
+                    part.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
+                    part.transform.parent = player2.transform;
+                    part.GetComponent<HingeJoint>().connectedBody = lastSpawnned.GetComponent<Rigidbody>();
+                    part.transform.localPosition = new Vector3(0f, 0f, 0f);
+                }
+                else
+                {
+                    part = Instantiate(partPrefab, new Vector3(transform.position.x, transform.position.y, (transform.position.z + partlength * (i + 1))), Quaternion.identity);
+                    part.transform.parent = player1.transform;
+                    part.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
+                    part.GetComponent<HingeJoint>().connectedBody = lastSpawnned.GetComponent<Rigidbody>();
+                }
+
+                lastSpawnned = part;
+                ropePart.Add(part);
             }
-            else if(i == cnt - 1)
-            {
-                part =  Instantiate(partPrefab, new Vector3(transform.position.x , transform.position.y , (transform.position.z + partlength * (i + 1))), Quaternion.identity);
-                part.transform.localRotation = Quaternion.Euler(-90, 0f, 0f);
-                part.transform.parent = player2.transform;
-                part.GetComponent<HingeJoint>().connectedBody = lastSpawnned.GetComponent<Rigidbody>();
-                part.transform.localPosition = new Vector3(0f, 0f, 0f);
-            }
-            else
-            {
-                part = Instantiate(partPrefab, new Vector3(transform.position.x , transform.position.y , (transform.position.z + partlength * (i + 1))), Quaternion.identity);
-                part.transform.parent = player1.transform;
-                part.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
-                part.GetComponent<HingeJoint>().connectedBody = lastSpawnned.GetComponent<Rigidbody>();
-            }
-            
-            lastSpawnned = part;
-           
+            player2.GetComponent<HingeJoint>().connectedBody = lastSpawnned.GetComponent<Rigidbody>();
         }
-        player2.GetComponent<HingeJoint>().connectedBody = lastSpawnned.GetComponent<Rigidbody>();
-        ropeCnt = true;
-     
+        p1rg.isKinematic = false;
+        p2rg.isKinematic = false;
     }
 
+    public void DestroyRope()
+    {
+        foreach(GameObject temp in ropePart)
+        {
+            Destroy(temp);
+        }
+        temp--;
+        if(temp <0)
+        {
+            temp = 0;
+        }
+        StartCoroutine(respawnProcess());
+    }
+
+    IEnumerator respawnProcess()
+    {
+        yield return new WaitForSeconds(5f);
+        ropeCnt = false;
+    }
+    
 }
