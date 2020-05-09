@@ -9,6 +9,7 @@ public class rope : MonoBehaviour
     [SerializeField] GameObject player2;
     [Range(1, 50)] [SerializeField] int length;
     [SerializeField] int maxDistance = 15;
+    [SerializeField] int ropelength = 16;
 
     Rigidbody p1rg;
     Rigidbody p2rg;
@@ -16,6 +17,7 @@ public class rope : MonoBehaviour
     private GameObject lastSpawnned;
     bool ropeCnt;
     int temp = 0;
+    
     
     List<GameObject> ropePart = new List<GameObject>();
 
@@ -41,6 +43,7 @@ public class rope : MonoBehaviour
         if (length > maxDistance)
         {
             DestroyRope();
+            
         }
     }
 
@@ -51,16 +54,16 @@ public class rope : MonoBehaviour
         {
             p1rg.isKinematic = true;
             p2rg.isKinematic = true;
-            temp++;
+            temp++;  // temp and ropeCnt are the gateway to allow the execution of the function
             ropeCnt = true;
-            length = (int)(Vector3.Distance(player1.transform.position, player2.transform.position));
-            int cnt = (int)(length / partlength);
+            length = (int)(Vector3.Distance(player1.transform.position, player2.transform.position)); // length between the two player
+            int cnt = (int)(ropelength / partlength); // number of rope parts needed
             for (int i = 0; i < cnt; i++)
             {
                 GameObject part;
                 if (i == 0)
                 {
-                    part = Instantiate(partPrefab, new Vector3(transform.position.x, transform.position.y, (transform.position.z + partlength * (i + 1))), Quaternion.identity);
+                    part = Instantiate(partPrefab, new Vector3(player1.transform.position.x, player1.transform.position.y, (player1.transform.position.z + partlength * (i + 1))), Quaternion.identity);
                     part.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
                     part.transform.parent = player1.transform;
                     part.GetComponent<HingeJoint>().connectedBody = player1.GetComponent<Rigidbody>();
@@ -68,7 +71,7 @@ public class rope : MonoBehaviour
                 }
                 else if (i == cnt - 1)
                 {
-                    part = Instantiate(partPrefab, new Vector3(transform.position.x, transform.position.y, (transform.position.z + partlength * (i + 1))), Quaternion.identity);
+                    part = Instantiate(partPrefab, new Vector3(player1.transform.position.x, player1.transform.position.y, (player1.transform.position.z + partlength * (i + 1))), Quaternion.identity);
                     part.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
                     part.transform.parent = player2.transform;
                     part.GetComponent<HingeJoint>().connectedBody = lastSpawnned.GetComponent<Rigidbody>();
@@ -76,8 +79,7 @@ public class rope : MonoBehaviour
                 }
                 else
                 {
-                    part = Instantiate(partPrefab, new Vector3(transform.position.x, transform.position.y, (transform.position.z + partlength * (i + 1))), Quaternion.identity);
-                    part.transform.parent = player1.transform;
+                    part = Instantiate(partPrefab, new Vector3(player1.transform.position.x, player1.transform.position.y, (player1.transform.position.z + partlength * (i + 1))), Quaternion.identity); 
                     part.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
                     part.GetComponent<HingeJoint>().connectedBody = lastSpawnned.GetComponent<Rigidbody>();
                 }
@@ -93,6 +95,7 @@ public class rope : MonoBehaviour
 
     public void DestroyRope()
     {
+        ropeCnt = true;
         foreach(GameObject temp in ropePart)
         {
             Destroy(temp);
